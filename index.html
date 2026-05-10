@@ -42,7 +42,6 @@
             }
         }
 
-        /* Admin View */
         .admin-panel {
             padding: 40px;
         }
@@ -141,7 +140,6 @@
             background: #7f8c8d;
         }
 
-        /* Employee List */
         .employees-section {
             margin-top: 30px;
         }
@@ -198,7 +196,6 @@
             background: #ff5252;
         }
 
-        /* Attendance Records */
         .attendance-section {
             margin-top: 30px;
         }
@@ -247,7 +244,6 @@
             line-height: 1.6;
         }
 
-        /* Employee View */
         .employee-panel {
             padding: 40px;
             text-align: center;
@@ -364,7 +360,6 @@
             color: #667eea;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .admin-panel,
             .employee-panel {
@@ -385,26 +380,10 @@
         .hidden {
             display: none;
         }
-
-        .spinner {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border: 2px solid #667eea;
-            border-top: 2px solid transparent;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-            margin-right: 8px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Main Login Page -->
         <div id="mainLoginView" class="card">
             <div class="admin-panel" style="text-align: center;">
                 <h1 style="margin-bottom: 40px; color: #667eea; font-size: 32px;">Attendance System</h1>
@@ -421,7 +400,6 @@
             </div>
         </div>
 
-        <!-- Admin Login Page -->
         <div id="adminLoginView" class="card hidden">
             <div class="admin-panel" style="text-align: center;">
                 <h1 style="margin-bottom: 40px; color: #667eea;">Admin Login</h1>
@@ -438,7 +416,6 @@
             </div>
         </div>
 
-        <!-- Employee Login Page -->
         <div id="employeeLoginView" class="card hidden">
             <div class="admin-panel" style="text-align: center;">
                 <h1 style="margin-bottom: 40px; color: #764ba2;">Employee Login</h1>
@@ -457,7 +434,6 @@
             </div>
         </div>
 
-        <!-- Admin View -->
         <div id="adminView" class="card hidden">
             <div class="admin-panel">
                 <div class="admin-header">
@@ -488,7 +464,6 @@
             </div>
         </div>
 
-        <!-- Employee View -->
         <div id="employeeView" class="card hidden">
             <div class="employee-panel">
                 <div class="employee-header">
@@ -514,10 +489,8 @@
     </div>
 
     <script>
-        // Admin password (change this to your desired password)
         const ADMIN_PASSWORD = "admin123";
 
-        // Initialize storage
         function initializeStorage() {
             if (!localStorage.getItem('employees')) {
                 localStorage.setItem('employees', JSON.stringify([]));
@@ -583,24 +556,51 @@
         }
 
         function addEmployee() {
-            const name = document.getElementById('employeeName').value.trim();
-            if (!name) {
-                alert('Please enter employee name');
-                return;
+            try {
+                const nameInput = document.getElementById('employeeName');
+                const name = nameInput.value.trim();
+                
+                if (!name) {
+                    alert('Please enter employee name');
+                    nameInput.focus();
+                    return;
+                }
+
+                let employees = [];
+                const storedData = localStorage.getItem('employees');
+                if (storedData) {
+                    try {
+                        employees = JSON.parse(storedData);
+                    } catch (e) {
+                        employees = [];
+                    }
+                }
+                
+                if (employees.some(e => e.name.toLowerCase() === name.toLowerCase())) {
+                    alert('Employee already exists!');
+                    nameInput.focus();
+                    return;
+                }
+                
+                const newEmployee = {
+                    id: Date.now().toString(),
+                    name: name
+                };
+
+                employees.push(newEmployee);
+                localStorage.setItem('employees', JSON.stringify(employees));
+                
+                nameInput.value = '';
+                nameInput.focus();
+                
+                displayEmployeeList();
+                updateEmployeeSelect();
+                
+                alert('✓ Employee "' + name + '" added successfully!');
+            } catch (error) {
+                console.error('Error adding employee:', error);
+                alert('Error adding employee. Please try again.');
             }
-
-            const employees = JSON.parse(localStorage.getItem('employees'));
-            const newEmployee = {
-                id: Date.now().toString(),
-                name: name
-            };
-
-            employees.push(newEmployee);
-            localStorage.setItem('employees', JSON.stringify(employees));
-            document.getElementById('employeeName').value = '';
-            displayEmployeeList();
-            updateEmployeeSelect();
-            alert('Employee added successfully!');
         }
 
         function removeEmployee(id) {
@@ -614,31 +614,41 @@
         }
 
         function displayEmployeeList() {
-            const employees = JSON.parse(localStorage.getItem('employees'));
-            const container = document.getElementById('employeeListAdmin');
-            
-            if (employees.length === 0) {
-                container.innerHTML = '<p style="color: #999; padding: 20px; text-align: center;">No employees added yet</p>';
-                return;
-            }
+            try {
+                const storedData = localStorage.getItem('employees');
+                const employees = storedData ? JSON.parse(storedData) : [];
+                const container = document.getElementById('employeeListAdmin');
+                
+                if (employees.length === 0) {
+                    container.innerHTML = '<p style="color: #999; padding: 20px; text-align: center;">No employees added yet</p>';
+                    return;
+                }
 
-            container.innerHTML = employees.map(emp => `
-                <div class="employee-item">
-                    <span class="employee-name">${emp.name}</span>
-                    <div class="employee-actions">
-                        <button class="btn-small btn-remove" onclick="removeEmployee('${emp.id}')">Remove</button>
+                container.innerHTML = employees.map(emp => `
+                    <div class="employee-item">
+                        <span class="employee-name">${emp.name}</span>
+                        <div class="employee-actions">
+                            <button class="btn-small btn-remove" onclick="removeEmployee('${emp.id}')">Remove</button>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
+            } catch (error) {
+                console.error('Error displaying employees:', error);
+            }
         }
 
         function updateEmployeeSelect() {
-            const employees = JSON.parse(localStorage.getItem('employees'));
-            const select = document.getElementById('employeeSelect');
-            select.innerHTML = '<option value="">-- Choose an employee --</option>';
-            select.innerHTML += employees.map(emp => `
-                <option value="${emp.id}">${emp.name}</option>
-            `).join('');
+            try {
+                const storedData = localStorage.getItem('employees');
+                const employees = storedData ? JSON.parse(storedData) : [];
+                const select = document.getElementById('employeeSelect');
+                select.innerHTML = '<option value="">-- Choose an employee --</option>';
+                select.innerHTML += employees.map(emp => `
+                    <option value="${emp.id}">${emp.name}</option>
+                `).join('');
+            } catch (error) {
+                console.error('Error updating employee select:', error);
+            }
         }
 
         async function getDeviceInfo() {
@@ -682,7 +692,6 @@
             attendanceList.push(attendance);
             localStorage.setItem('attendance', JSON.stringify(attendanceList));
 
-            // Show success message
             const statusMsg = document.getElementById('statusMessage');
             const typeText = type === 'in' ? 'Clock In' : 'Clock Out';
             statusMsg.textContent = `✓ ${typeText} recorded at ${attendance.time} | IP: ${attendance.ipAddress}`;
@@ -736,7 +745,6 @@
                 return;
             }
 
-            // Sort by timestamp descending (latest first)
             const sorted = attendance.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             
             container.innerHTML = sorted.map(record => {
@@ -782,10 +790,8 @@
                 return;
             }
 
-            // Prepare CSV headers
             const headers = ['Employee Name', 'Type', 'Date', 'Time', 'IP Address', 'Device', 'Full Timestamp'];
             
-            // Prepare CSV rows
             const rows = attendance.map(record => [
                 record.employeeName,
                 record.type === 'in' ? 'Clock In' : 'Clock Out',
@@ -796,7 +802,6 @@
                 record.timestamp
             ]);
 
-            // Create CSV content
             let csvContent = 'data:text/csv;charset=utf-8,';
             csvContent += headers.join(',') + '\n';
             
@@ -804,16 +809,18 @@
                 csvContent += row.map(cell => `"${cell}"`).join(',') + '\n';
             });
 
-            // Create download link
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement('a');
             link.setAttribute('href', encodedUri);
             link.setAttribute('download', `attendance_${new Date().toISOString().split('T')[0]}.csv`);
             link.click();
 
-            // Show success message
             alert('✓ Attendance report downloaded successfully!');
         }
+
+        window.addEventListener('load', function() {
+            initializeStorage();
+        });
     </script>
 </body>
 </html>
