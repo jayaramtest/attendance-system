@@ -190,6 +190,167 @@
             padding: 20px;
             text-align: center;
         }
+
+        /* Mobile Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .panel {
+                padding: 20px;
+            }
+
+            .header {
+                margin-bottom: 20px;
+                padding-bottom: 15px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+                margin-bottom: 8px;
+            }
+
+            .form-group input, .form-group select {
+                padding: 10px 12px;
+                font-size: 16px;
+            }
+
+            .btn-primary, .btn-danger {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+
+            .clock-btn {
+                padding: 15px 40px;
+                font-size: 16px;
+                max-width: 90%;
+            }
+
+            .item {
+                padding: 12px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .btn-small {
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+
+            .section h2 {
+                font-size: 16px;
+                margin-bottom: 12px;
+            }
+
+            .attendance-timeline {
+                max-height: 250px;
+            }
+
+            .sync-indicator {
+                padding: 8px;
+                font-size: 11px;
+            }
+
+            .center h1 {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+
+            #employeeNameDisplay {
+                font-size: 18px !important;
+            }
+
+            .status {
+                padding: 12px;
+                font-size: 13px;
+                margin-bottom: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .panel {
+                padding: 15px;
+            }
+
+            .container {
+                width: 100%;
+            }
+
+            .card {
+                border-radius: 8px;
+            }
+
+            .btn-primary, .btn-danger, .btn-logout {
+                padding: 11px 15px;
+                font-size: 13px;
+                margin-bottom: 8px;
+            }
+
+            .clock-btn {
+                padding: 12px 30px;
+                font-size: 15px;
+                width: 95%;
+                margin: 15px auto;
+            }
+
+            .item {
+                padding: 10px;
+                font-size: 13px;
+            }
+
+            .btn-small {
+                padding: 5px 8px;
+                font-size: 10px;
+            }
+
+            .section {
+                margin-top: 20px;
+            }
+
+            .section h2 {
+                font-size: 15px;
+                margin-bottom: 10px;
+            }
+
+            .form-group label {
+                font-size: 13px;
+                margin-bottom: 6px;
+            }
+
+            .form-group input, .form-group select {
+                padding: 9px 10px;
+                font-size: 14px;
+                border-radius: 6px;
+            }
+
+            .center h1 {
+                font-size: 20px;
+                margin-bottom: 15px;
+            }
+
+            #employeeNameDisplay {
+                font-size: 16px !important;
+                margin-bottom: 30px;
+            }
+
+            .sync-indicator {
+                padding: 7px;
+                font-size: 10px;
+                margin-bottom: 12px;
+            }
+
+            .status {
+                padding: 10px;
+                font-size: 12px;
+                margin-bottom: 10px;
+            }
+
+            .list-empty {
+                padding: 15px;
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -292,24 +453,28 @@
     <script>
         const ADMIN_PASSWORD = "admin123";
 
-        // PASTE YOUR FIREBASE CONFIG HERE
+        // ⬇️ REPLACE WITH YOUR FIREBASE CONFIG ⬇️
         const firebaseConfig = {
-         apiKey: "AIzaSyATt1qXL4qjC9naPKgP8TwiCUi4AquVO2w",
-         authDomain: "attendance-system-5f75c.firebaseapp.com",
-         projectId: "attendance-system-5f75c",
-         storageBucket: "attendance-system-5f75c.firebasestorage.app",
-         messagingSenderId: "668518246439",
-         appId: "1:668518246439:web:e4ca2fe881287638ff4602",
-         measurementId: "G-CZBTKDD8X2"
+          apiKey: "YOUR_API_KEY",
+          authDomain: "your-project.firebaseapp.com",
+          projectId: "your-project-id",
+          storageBucket: "your-project.appspot.com",
+          messagingSenderId: "123456789",
+          appId: "1:123456789:web:abcdef123456"
         };
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        try {
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.firestore();
+            console.log('✅ Firebase initialized');
+        } catch (error) {
+            console.error('Firebase error:', error);
+            alert('Firebase config error. Check console.');
+        }
 
+        const db = firebase.firestore();
         let currentEmployee = null;
 
-        // Navigation functions
         function goToMainLogin() {
             document.getElementById('mainLoginView').classList.remove('hidden');
             document.getElementById('adminLoginView').classList.add('hidden');
@@ -327,7 +492,6 @@
             loadEmployees();
         }
 
-        // Login functions
         function loginAsAdmin() {
             const password = document.getElementById('adminPassword').value;
             if (password === ADMIN_PASSWORD) {
@@ -336,7 +500,7 @@
                 listenToEmployees();
                 listenToAttendance();
             } else {
-                alert('Invalid password');
+                alert('❌ Invalid password');
                 document.getElementById('adminPassword').value = '';
             }
         }
@@ -357,10 +521,11 @@
                     document.getElementById('employeeNameDisplay').textContent = currentEmployee.name;
                     listenToMyAttendance();
                 }
+            }).catch(error => {
+                alert('Error: ' + error.message);
             });
         }
 
-        // Employee functions
         function addEmployee() {
             const name = document.getElementById('employeeName').value.trim();
             if (!name) {
@@ -368,20 +533,26 @@
                 return;
             }
 
+            console.log('Adding employee:', name);
+
             db.collection('employees').add({
                 name: name,
                 addedDate: new Date().toLocaleString()
-            }).then(() => {
+            }).then(docRef => {
+                console.log('✅ Employee added:', docRef.id);
                 document.getElementById('employeeName').value = '';
-                alert('✓ Employee added!');
+                alert('✓ Employee added successfully!');
             }).catch(error => {
+                console.error('❌ Error:', error);
                 alert('Error: ' + error.message);
             });
         }
 
         function removeEmployee(id) {
             if (confirm('Remove this employee?')) {
-                db.collection('employees').doc(id).delete();
+                db.collection('employees').doc(id).delete().catch(error => {
+                    alert('Error: ' + error.message);
+                });
             }
         }
 
@@ -395,6 +566,8 @@
                     option.textContent = doc.data().name;
                     select.appendChild(option);
                 });
+            }).catch(error => {
+                console.error('Error loading employees:', error);
             });
         }
 
@@ -416,10 +589,11 @@
                     `;
                     container.appendChild(div);
                 });
+            }).catch(error => {
+                console.error('Error:', error);
             });
         }
 
-        // Attendance functions
         async function getDeviceInfo() {
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             let ipAddress = 'Unknown';
@@ -454,6 +628,8 @@
                 
                 setTimeout(() => statusMsg.classList.remove('show'), 4000);
                 listenToMyAttendance();
+            }).catch(error => {
+                alert('Error: ' + error.message);
             });
         }
 
@@ -485,6 +661,8 @@
                         `;
                         container.appendChild(div);
                     });
+                }).catch(error => {
+                    console.error('Error:', error);
                 });
         }
 
@@ -515,6 +693,8 @@
                         `;
                         container.appendChild(div);
                     });
+                }).catch(error => {
+                    console.error('Error:', error);
                 });
         }
 
