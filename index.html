@@ -233,11 +233,6 @@
             font-weight: 600;
         }
 
-        .record-time {
-            color: #667eea;
-            font-weight: 600;
-        }
-
         .record-details {
             font-size: 13px;
             color: #666;
@@ -284,10 +279,6 @@
             background: #5568d3;
             transform: translateY(-2px);
             box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-        }
-
-        .clock-in-btn:active {
-            transform: translateY(0);
         }
 
         .status-message {
@@ -379,6 +370,11 @@
 
         .hidden {
             display: none;
+        }
+
+        .loading {
+            color: #667eea;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -490,6 +486,56 @@
 
     <script>
         const ADMIN_PASSWORD = "admin123";
+        const DB_URL = "https://sheetdb.io/api/v1/d5e5c5c5e5c5c5c5";
+
+        async function syncData(action, data = null) {
+            try {
+                if (action === 'getEmployees') {
+                    const response = await fetch(DB_URL + '/search?sheet=employees');
+                    const data = await response.json();
+                    return data || [];
+                }
+                if (action === 'addEmployee') {
+                    await fetch(DB_URL + '?sheet=employees', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: data.id, name: data.name })
+                    });
+                }
+                if (action === 'getAttendance') {
+                    const response = await fetch(DB_URL + '/search?sheet=attendance');
+                    return await response.json() || [];
+                }
+                if (action === 'addAttendance') {
+                    await fetch(DB_URL + '?sheet=attendance', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                }
+            } catch (error) {
+                console.log('Using local storage as backup');
+                return null;
+            }
+        }
+
+        function getLocalEmployees() {
+            const storedData = localStorage.getItem('employees');
+            return storedData ? JSON.parse(storedData) : [];
+        }
+
+        function setLocalEmployees(data) {
+            localStorage.setItem('employees', JSON.stringify(data));
+        }
+
+        function getLocalAttendance() {
+            const storedData = localStorage.getItem('attendance');
+            return storedData ? JSON.parse(storedData) : [];
+        }
+
+        function setLocalAttendance(data) {
+            localStorage.setItem('attendance', JSON.stringify(data));
+        }
 
         function initializeStorage() {
             if (!localStorage.getItem('employees')) {
@@ -504,8 +550,6 @@
             document.getElementById('mainLoginView').classList.remove('hidden');
             document.getElementById('adminLoginView').classList.add('hidden');
             document.getElementById('employeeLoginView').classList.add('hidden');
-            document.getElementById('adminPassword').value = '';
-            document.getElementById('employeeSelect').value = '';
         }
 
         function goToAdminLogin() {
@@ -518,7 +562,6 @@
             document.getElementById('mainLoginView').classList.add('hidden');
             document.getElementById('employeeLoginView').classList.remove('hidden');
             updateEmployeeSelect();
-            document.getElementById('employeeSelect').focus();
         }
 
         function loginAsAdmin() {
@@ -535,15 +578,13 @@
         }
 
         function loginAsEmployee() {
-            const employeeSelect = document.getElementById('employeeSelect');
-            const selectedEmployee = employeeSelect.value;
-            
+            const selectedEmployee = document.getElementById('employeeSelect').value;
             if (!selectedEmployee) {
                 alert('Please select an employee');
                 return;
             }
 
-            const employees = JSON.parse(localStorage.getItem('employees'));
+            const employees = getLocalEmployees();
             const employee = employees.find(e => e.id === selectedEmployee);
 
             if (employee) {
@@ -555,100 +596,70 @@
             }
         }
 
-        function addEmployee() {
-            try {
-                const nameInput = document.getElementById('employeeName');
-                const name = nameInput.value.trim();
-                
-                if (!name) {
-                    alert('Please enter employee name');
-                    nameInput.focus();
-                    return;
-                }
-
-                let employees = [];
-                const storedData = localStorage.getItem('employees');
-                if (storedData) {
-                    try {
-                        employees = JSON.parse(storedData);
-                    } catch (e) {
-                        employees = [];
-                    }
-                }
-                
-                if (employees.some(e => e.name.toLowerCase() === name.toLowerCase())) {
-                    alert('Employee already exists!');
-                    nameInput.focus();
-                    return;
-                }
-                
-                const newEmployee = {
-                    id: Date.now().toString(),
-                    name: name
-                };
-
-                employees.push(newEmployee);
-                localStorage.setItem('employees', JSON.stringify(employees));
-                
-                nameInput.value = '';
-                nameInput.focus();
-                
-                displayEmployeeList();
-                updateEmployeeSelect();
-                
-                alert('✓ Employee "' + name + '" added successfully!');
-            } catch (error) {
-                console.error('Error adding employee:', error);
-                alert('Error adding employee. Please try again.');
+        async function addEmployee() {
+            const name = document.getElementById('employeeName').value.trim();
+            if (!name) {
+                alert('Please enter employee name');
+                return;
             }
+
+            const employees = getLocalEmployees();
+            if (employees.some(e => e.name.toLowerCase() === name.toLowerCase())) {
+                alert('Employee already exists!');
+                return;
+            }
+
+            const newEmployee = {
+                id: Date.now().toString(),
+                name: name
+            };
+
+            employees.push(newEmployee);
+            setLocalEmployees(employees);
+            await syncData('addEmployee', newEmployee);
+
+            document.getElementById('employeeName').value = '';
+            displayEmployeeList();
+            updateEmployeeSelect();
+            alert('✓ Employee added successfully!');
         }
 
         function removeEmployee(id) {
-            if (confirm('Are you sure you want to remove this employee?')) {
-                let employees = JSON.parse(localStorage.getItem('employees'));
+            if (confirm('Remove this employee?')) {
+                let employees = getLocalEmployees();
                 employees = employees.filter(e => e.id !== id);
-                localStorage.setItem('employees', JSON.stringify(employees));
+                setLocalEmployees(employees);
                 displayEmployeeList();
                 updateEmployeeSelect();
             }
         }
 
         function displayEmployeeList() {
-            try {
-                const storedData = localStorage.getItem('employees');
-                const employees = storedData ? JSON.parse(storedData) : [];
-                const container = document.getElementById('employeeListAdmin');
-                
-                if (employees.length === 0) {
-                    container.innerHTML = '<p style="color: #999; padding: 20px; text-align: center;">No employees added yet</p>';
-                    return;
-                }
-
-                container.innerHTML = employees.map(emp => `
-                    <div class="employee-item">
-                        <span class="employee-name">${emp.name}</span>
-                        <div class="employee-actions">
-                            <button class="btn-small btn-remove" onclick="removeEmployee('${emp.id}')">Remove</button>
-                        </div>
-                    </div>
-                `).join('');
-            } catch (error) {
-                console.error('Error displaying employees:', error);
+            const employees = getLocalEmployees();
+            const container = document.getElementById('employeeListAdmin');
+            
+            if (employees.length === 0) {
+                container.innerHTML = '<p style="color: #999; padding: 20px; text-align: center;">No employees added yet</p>';
+                return;
             }
+
+            container.innerHTML = employees.map(emp => `
+                <div class="employee-item">
+                    <span class="employee-name">${emp.name}</span>
+                    <div class="employee-actions">
+                        <button class="btn-small btn-remove" onclick="removeEmployee('${emp.id}')">Remove</button>
+                    </div>
+                </div>
+            `).join('');
         }
 
         function updateEmployeeSelect() {
-            try {
-                const storedData = localStorage.getItem('employees');
-                const employees = storedData ? JSON.parse(storedData) : [];
-                const select = document.getElementById('employeeSelect');
-                select.innerHTML = '<option value="">-- Choose an employee --</option>';
-                select.innerHTML += employees.map(emp => `
-                    <option value="${emp.id}">${emp.name}</option>
-                `).join('');
-            } catch (error) {
-                console.error('Error updating employee select:', error);
-            }
+            const employees = getLocalEmployees();
+            const select = document.getElementById('employeeSelect');
+            select.innerHTML = '<option value="">-- Choose an employee --</option>';
+            select.innerHTML += employees.map(emp => `
+                <option value="${emp.id}">${emp.name}</option>
+            `).join('');
         }
 
         async function getDeviceInfo() {
@@ -661,7 +672,7 @@
                 const data = await response.json();
                 ipAddress = data.ip;
             } catch (error) {
-                console.log('Could not fetch IP address');
+                console.log('Could not fetch IP');
             }
             
             return {
@@ -688,25 +699,23 @@
                 ipAddress: info.ipAddress
             };
 
-            let attendanceList = JSON.parse(localStorage.getItem('attendance'));
+            let attendanceList = getLocalAttendance();
             attendanceList.push(attendance);
-            localStorage.setItem('attendance', JSON.stringify(attendanceList));
+            setLocalAttendance(attendanceList);
+            await syncData('addAttendance', attendance);
 
             const statusMsg = document.getElementById('statusMessage');
             const typeText = type === 'in' ? 'Clock In' : 'Clock Out';
             statusMsg.textContent = `✓ ${typeText} recorded at ${attendance.time} | IP: ${attendance.ipAddress}`;
             statusMsg.className = 'status-message status-success show';
             
-            setTimeout(() => {
-                statusMsg.classList.remove('show');
-            }, 4000);
-
+            setTimeout(() => statusMsg.classList.remove('show'), 4000);
             displayMyAttendance();
         }
 
         function displayMyAttendance() {
             const currentEmployee = JSON.parse(sessionStorage.getItem('currentEmployee'));
-            const allAttendance = JSON.parse(localStorage.getItem('attendance'));
+            const allAttendance = getLocalAttendance();
             const myAttendance = allAttendance.filter(a => a.employeeId === currentEmployee.id);
             
             const today = new Date().toLocaleDateString();
@@ -737,11 +746,11 @@
         }
 
         function displayAttendanceRecords() {
-            const attendance = JSON.parse(localStorage.getItem('attendance'));
+            const attendance = getLocalAttendance();
             const container = document.getElementById('attendanceListAdmin');
             
             if (attendance.length === 0) {
-                container.innerHTML = '<p style="color: #999; padding: 20px; text-align: center;">No attendance records yet</p>';
+                container.innerHTML = '<p style="color: #999; padding: 20px; text-align: center;">No records yet</p>';
                 return;
             }
 
@@ -759,9 +768,8 @@
                     <div class="record-details">
                         Time: ${record.time}<br>
                         Date: ${record.date}<br>
-                        IP Address: ${record.ipAddress || 'Unknown'}<br>
-                        Device: ${record.device}<br>
-                        Full: ${record.timestamp}
+                        IP: ${record.ipAddress || 'Unknown'}<br>
+                        Device: ${record.device}
                     </div>
                 </div>
             `;
@@ -769,29 +777,23 @@
         }
 
         function logout() {
-            if (confirm('Are you sure you want to logout?')) {
+            if (confirm('Logout?')) {
                 sessionStorage.removeItem('currentEmployee');
                 document.getElementById('mainLoginView').classList.remove('hidden');
                 document.getElementById('adminView').classList.add('hidden');
                 document.getElementById('employeeView').classList.add('hidden');
-                document.getElementById('adminPassword').value = '';
-                document.getElementById('employeeName').value = '';
-                document.getElementById('employeeSelect').value = '';
-                document.getElementById('adminLoginView').classList.add('hidden');
-                document.getElementById('employeeLoginView').classList.add('hidden');
             }
         }
 
         function downloadCSV() {
-            const attendance = JSON.parse(localStorage.getItem('attendance'));
+            const attendance = getLocalAttendance();
             
             if (attendance.length === 0) {
-                alert('No attendance records to download');
+                alert('No records');
                 return;
             }
 
             const headers = ['Employee Name', 'Type', 'Date', 'Time', 'IP Address', 'Device', 'Full Timestamp'];
-            
             const rows = attendance.map(record => [
                 record.employeeName,
                 record.type === 'in' ? 'Clock In' : 'Clock Out',
@@ -804,18 +806,16 @@
 
             let csvContent = 'data:text/csv;charset=utf-8,';
             csvContent += headers.join(',') + '\n';
-            
             rows.forEach(row => {
                 csvContent += row.map(cell => `"${cell}"`).join(',') + '\n';
             });
 
-            const encodedUri = encodeURI(csvContent);
             const link = document.createElement('a');
-            link.setAttribute('href', encodedUri);
+            link.setAttribute('href', encodeURI(csvContent));
             link.setAttribute('download', `attendance_${new Date().toISOString().split('T')[0]}.csv`);
             link.click();
 
-            alert('✓ Attendance report downloaded successfully!');
+            alert('✓ Downloaded!');
         }
 
         window.addEventListener('load', function() {
