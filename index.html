@@ -126,8 +126,6 @@
 
         .btn-danger:hover {
             background: #ff5252;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(255, 107, 107, 0.3);
         }
 
         .btn-logout {
@@ -164,21 +162,11 @@
             padding: 15px;
             background: #f9f9f9;
             border-radius: 8px;
-            transition: all 0.3s;
-        }
-
-        .employee-item:hover {
-            background: #f0f0f0;
         }
 
         .employee-name {
             color: #333;
             font-weight: 600;
-        }
-
-        .employee-actions {
-            display: flex;
-            gap: 10px;
         }
 
         .btn-small {
@@ -222,15 +210,10 @@
             border-radius: 6px;
         }
 
-        .record-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-
         .record-name {
             color: #333;
             font-weight: 600;
+            margin-bottom: 8px;
         }
 
         .record-details {
@@ -277,8 +260,6 @@
 
         .clock-in-btn:hover {
             background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
         }
 
         .status-message {
@@ -295,26 +276,8 @@
             border: 1px solid #c3e6cb;
         }
 
-        .status-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
         .status-message.show {
             display: block;
-            animation: slideDown 0.3s ease-out;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .my-attendance {
@@ -356,25 +319,10 @@
             .employee-panel {
                 padding: 20px;
             }
-
-            .admin-header h1,
-            .employee-header h1 {
-                font-size: 22px;
-            }
-
-            .clock-in-btn {
-                padding: 15px 30px;
-                font-size: 16px;
-            }
         }
 
         .hidden {
             display: none;
-        }
-
-        .loading {
-            color: #667eea;
-            font-weight: bold;
         }
     </style>
 </head>
@@ -486,56 +434,7 @@
 
     <script>
         const ADMIN_PASSWORD = "admin123";
-        const DB_URL = "https://sheetdb.io/api/v1/d5e5c5c5e5c5c5c5";
-
-        async function syncData(action, data = null) {
-            try {
-                if (action === 'getEmployees') {
-                    const response = await fetch(DB_URL + '/search?sheet=employees');
-                    const data = await response.json();
-                    return data || [];
-                }
-                if (action === 'addEmployee') {
-                    await fetch(DB_URL + '?sheet=employees', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id: data.id, name: data.name })
-                    });
-                }
-                if (action === 'getAttendance') {
-                    const response = await fetch(DB_URL + '/search?sheet=attendance');
-                    return await response.json() || [];
-                }
-                if (action === 'addAttendance') {
-                    await fetch(DB_URL + '?sheet=attendance', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    });
-                }
-            } catch (error) {
-                console.log('Using local storage as backup');
-                return null;
-            }
-        }
-
-        function getLocalEmployees() {
-            const storedData = localStorage.getItem('employees');
-            return storedData ? JSON.parse(storedData) : [];
-        }
-
-        function setLocalEmployees(data) {
-            localStorage.setItem('employees', JSON.stringify(data));
-        }
-
-        function getLocalAttendance() {
-            const storedData = localStorage.getItem('attendance');
-            return storedData ? JSON.parse(storedData) : [];
-        }
-
-        function setLocalAttendance(data) {
-            localStorage.setItem('attendance', JSON.stringify(data));
-        }
+        const GOOGLE_SHEET_URL = "https://script.google.com/macros/d/AKfycbylvbnm4F4-T1en1k4_eS_qhzQhAoAUJARQxk0v-BTo2bRKGMYgYyGqOk2TuSfRNxQlWQ/usercopy";
 
         function initializeStorage() {
             if (!localStorage.getItem('employees')) {
@@ -543,6 +442,21 @@
             }
             if (!localStorage.getItem('attendance')) {
                 localStorage.setItem('attendance', JSON.stringify([]));
+            }
+        }
+
+        async function sendToGoogleSheet(sheetName, data) {
+            try {
+                const response = await fetch(GOOGLE_SHEET_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        sheet: sheetName,
+                        data: data
+                    })
+                });
+                console.log('Data sent to Google Sheet');
+            } catch (error) {
+                console.log('Could not send to Google Sheet, using local storage');
             }
         }
 
@@ -555,7 +469,6 @@
         function goToAdminLogin() {
             document.getElementById('mainLoginView').classList.add('hidden');
             document.getElementById('adminLoginView').classList.remove('hidden');
-            document.getElementById('adminPassword').focus();
         }
 
         function goToEmployeeLogin() {
@@ -573,7 +486,6 @@
                 displayAttendanceRecords();
             } else {
                 alert('Invalid password');
-                document.getElementById('adminPassword').value = '';
             }
         }
 
@@ -584,7 +496,7 @@
                 return;
             }
 
-            const employees = getLocalEmployees();
+            const employees = JSON.parse(localStorage.getItem('employees'));
             const employee = employees.find(e => e.id === selectedEmployee);
 
             if (employee) {
@@ -603,7 +515,8 @@
                 return;
             }
 
-            const employees = getLocalEmployees();
+            let employees = JSON.parse(localStorage.getItem('employees'));
+            
             if (employees.some(e => e.name.toLowerCase() === name.toLowerCase())) {
                 alert('Employee already exists!');
                 return;
@@ -611,12 +524,14 @@
 
             const newEmployee = {
                 id: Date.now().toString(),
-                name: name
+                name: name,
+                addedDate: new Date().toLocaleString()
             };
 
             employees.push(newEmployee);
-            setLocalEmployees(employees);
-            await syncData('addEmployee', newEmployee);
+            localStorage.setItem('employees', JSON.stringify(employees));
+            
+            await sendToGoogleSheet('employees', newEmployee);
 
             document.getElementById('employeeName').value = '';
             displayEmployeeList();
@@ -626,16 +541,16 @@
 
         function removeEmployee(id) {
             if (confirm('Remove this employee?')) {
-                let employees = getLocalEmployees();
+                let employees = JSON.parse(localStorage.getItem('employees'));
                 employees = employees.filter(e => e.id !== id);
-                setLocalEmployees(employees);
+                localStorage.setItem('employees', JSON.stringify(employees));
                 displayEmployeeList();
                 updateEmployeeSelect();
             }
         }
 
         function displayEmployeeList() {
-            const employees = getLocalEmployees();
+            const employees = JSON.parse(localStorage.getItem('employees'));
             const container = document.getElementById('employeeListAdmin');
             
             if (employees.length === 0) {
@@ -646,7 +561,7 @@
             container.innerHTML = employees.map(emp => `
                 <div class="employee-item">
                     <span class="employee-name">${emp.name}</span>
-                    <div class="employee-actions">
+                    <div>
                         <button class="btn-small btn-remove" onclick="removeEmployee('${emp.id}')">Remove</button>
                     </div>
                 </div>
@@ -654,7 +569,7 @@
         }
 
         function updateEmployeeSelect() {
-            const employees = getLocalEmployees();
+            const employees = JSON.parse(localStorage.getItem('employees'));
             const select = document.getElementById('employeeSelect');
             select.innerHTML = '<option value="">-- Choose an employee --</option>';
             select.innerHTML += employees.map(emp => `
@@ -699,10 +614,11 @@
                 ipAddress: info.ipAddress
             };
 
-            let attendanceList = getLocalAttendance();
+            let attendanceList = JSON.parse(localStorage.getItem('attendance'));
             attendanceList.push(attendance);
-            setLocalAttendance(attendanceList);
-            await syncData('addAttendance', attendance);
+            localStorage.setItem('attendance', JSON.stringify(attendanceList));
+            
+            await sendToGoogleSheet('attendance', attendance);
 
             const statusMsg = document.getElementById('statusMessage');
             const typeText = type === 'in' ? 'Clock In' : 'Clock Out';
@@ -715,7 +631,7 @@
 
         function displayMyAttendance() {
             const currentEmployee = JSON.parse(sessionStorage.getItem('currentEmployee'));
-            const allAttendance = getLocalAttendance();
+            const allAttendance = JSON.parse(localStorage.getItem('attendance'));
             const myAttendance = allAttendance.filter(a => a.employeeId === currentEmployee.id);
             
             const today = new Date().toLocaleDateString();
@@ -746,7 +662,7 @@
         }
 
         function displayAttendanceRecords() {
-            const attendance = getLocalAttendance();
+            const attendance = JSON.parse(localStorage.getItem('attendance'));
             const container = document.getElementById('attendanceListAdmin');
             
             if (attendance.length === 0) {
@@ -761,10 +677,7 @@
                 const typeColor = record.type === 'in' ? '#28a745' : '#dc3545';
                 return `
                 <div class="attendance-record" style="border-left-color: ${typeColor};">
-                    <div class="record-header">
-                        <span class="record-name">${record.employeeName}</span>
-                        <span style="color: ${typeColor}; font-weight: 600;">${typeText}</span>
-                    </div>
+                    <div class="record-name" style="color: ${typeColor};">${record.employeeName} - ${typeText}</div>
                     <div class="record-details">
                         Time: ${record.time}<br>
                         Date: ${record.date}<br>
@@ -786,22 +699,21 @@
         }
 
         function downloadCSV() {
-            const attendance = getLocalAttendance();
+            const attendance = JSON.parse(localStorage.getItem('attendance'));
             
             if (attendance.length === 0) {
                 alert('No records');
                 return;
             }
 
-            const headers = ['Employee Name', 'Type', 'Date', 'Time', 'IP Address', 'Device', 'Full Timestamp'];
+            const headers = ['Employee Name', 'Type', 'Date', 'Time', 'IP Address', 'Device'];
             const rows = attendance.map(record => [
                 record.employeeName,
                 record.type === 'in' ? 'Clock In' : 'Clock Out',
                 record.date,
                 record.time,
                 record.ipAddress || 'Unknown',
-                record.device,
-                record.timestamp
+                record.device
             ]);
 
             let csvContent = 'data:text/csv;charset=utf-8,';
