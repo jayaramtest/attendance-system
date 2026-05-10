@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Attendance System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Admin View */
+        .admin-panel {
+            padding: 40px;
+        }
+
+        .admin-header {
+            margin-bottom: 40px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 20px;
+        }
+
+        .admin-header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .admin-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-danger {
+            background: #ff6b6b;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-danger:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn-logout {
+            background: #95a5a6;
+            color: white;
+            width: 100%;
+        }
+
+        .btn-logout:hover {
+            background: #7f8c8d;
+        }
+
+        /* Employee List */
+        .employees-section {
+            margin-top: 30px;
+        }
+
+        .employees-section h2 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .employee-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .employee-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .employee-item:hover {
+            background: #f0f0f0;
+        }
+
+        .employee-name {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .employee-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+        }
+
+        .btn-remove {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-remove:hover {
+            background: #ff5252;
+        }
+
+        /* Attendance Records */
+        .attendance-section {
+            margin-top: 30px;
+        }
+
+        .attendance-section h2 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .attendance-list {
+            display: grid;
+            gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .attendance-record {
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #667eea;
+            border-radius: 6px;
+        }
+
+        .record-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .record-name {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .record-time {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .record-details {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* Employee View */
+        .employee-panel {
+            padding: 40px;
+            text-align: center;
+        }
+
+        .employee-header {
+            margin-bottom: 40px;
+        }
+
+        .employee-header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .employee-name-display {
+            color: #667eea;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .clock-in-section {
+            margin: 50px 0;
+        }
+
+        .clock-in-btn {
+            padding: 20px 50px;
+            font-size: 18px;
+            background: #667eea;
+            color: white;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .clock-in-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .clock-in-btn:active {
+            transform: translateY(0);
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-message.show {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .my-attendance {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .my-attendance h2 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .attendance-timeline {
+            display: grid;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .timeline-item {
+            padding: 12px;
+            background: #f9f9f9;
+            border-left: 4px solid #667eea;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .timeline-time {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .admin-panel,
+            .employee-panel {
+                padding: 20px;
+            }
+
+            .admin-header h1,
+            .employee-header h1 {
+                font-size: 22px;
+            }
+
+            .clock-in-btn {
+                padding: 15px 30px;
+                font-size: 16px;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #667eea;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Main Login Page -->
+        <div id="mainLoginView" class="card">
+            <div class="admin-panel" style="text-align: center;">
+                <h1 style="margin-bottom: 40px; color: #667eea; font-size: 32px;">Attendance System</h1>
+                <p style="color: #666; margin-bottom: 40px; font-size: 16px;">Select your role to login</p>
+                
+                <div style="margin-bottom: 30px;">
+                    <button class="btn-primary" onclick="goToAdminLogin()" style="margin-bottom: 15px; padding: 15px; font-size: 16px;">
+                        🔐 Admin Login
+                    </button>
+                    <button class="btn-primary" onclick="goToEmployeeLogin()" style="background: #764ba2; padding: 15px; font-size: 16px;">
+                        👤 Employee Login
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Login Page -->
+        <div id="adminLoginView" class="card hidden">
+            <div class="admin-panel" style="text-align: center;">
+                <h1 style="margin-bottom: 40px; color: #667eea;">Admin Login</h1>
+                
+                <div class="form-group" style="max-width: 400px; margin: 0 auto 30px;">
+                    <label>Enter Admin Password</label>
+                    <input type="password" id="adminPassword" placeholder="Enter password" onkeypress="if(event.key==='Enter') loginAsAdmin()">
+                </div>
+
+                <div style="max-width: 400px; margin: 0 auto;">
+                    <button class="btn-primary" onclick="loginAsAdmin()" style="margin-bottom: 10px;">Login</button>
+                    <button class="btn-danger" onclick="goToMainLogin()">Back to Login</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee Login Page -->
+        <div id="employeeLoginView" class="card hidden">
+            <div class="admin-panel" style="text-align: center;">
+                <h1 style="margin-bottom: 40px; color: #764ba2;">Employee Login</h1>
+                
+                <div class="form-group" style="max-width: 400px; margin: 0 auto 30px;">
+                    <label>Select Your Name</label>
+                    <select id="employeeSelect" style="width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
+                        <option value="">-- Choose an employee --</option>
+                    </select>
+                </div>
+
+                <div style="max-width: 400px; margin: 0 auto;">
+                    <button class="btn-primary" onclick="loginAsEmployee()" style="background: #764ba2; margin-bottom: 10px;">Login</button>
+                    <button class="btn-danger" onclick="goToMainLogin()">Back to Login</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin View -->
+        <div id="adminView" class="card hidden">
+            <div class="admin-panel">
+                <div class="admin-header">
+                    <h1>Admin Dashboard</h1>
+                    <p>Manage employees and view attendance records</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Add New Employee</label>
+                    <input type="text" id="employeeName" placeholder="Enter employee name">
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" onclick="addEmployee()">Add Employee</button>
+                    <button class="btn-primary" onclick="downloadCSV()" style="background: #28a745;">📥 Download CSV</button>
+                    <button class="btn-logout" onclick="logout()">Logout</button>
+                </div>
+
+                <div class="employees-section">
+                    <h2>Employees</h2>
+                    <div class="employee-list" id="employeeListAdmin"></div>
+                </div>
+
+                <div class="attendance-section">
+                    <h2>Attendance Records</h2>
+                    <div class="attendance-list" id="attendanceListAdmin"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee View -->
+        <div id="employeeView" class="card hidden">
+            <div class="employee-panel">
+                <div class="employee-header">
+                    <h1>Welcome</h1>
+                    <div class="employee-name-display" id="employeeNameDisplay"></div>
+                </div>
+
+                <div id="statusMessage" class="status-message"></div>
+
+                <div class="clock-in-section">
+                    <button class="clock-in-btn" onclick="recordAttendance('in')" style="background: #28a745;">Clock In</button>
+                    <button class="clock-in-btn" onclick="recordAttendance('out')" style="background: #dc3545;">Clock Out</button>
+                </div>
+
+                <div class="my-attendance">
+                    <h2>Your Attendance Today</h2>
+                    <div class="attendance-timeline" id="myAttendanceList"></div>
+                </div>
+
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Admin password (change this to your desired password)
+        const ADMIN_PASSWORD = "admin123";
+
+        // Initialize storage
+        function initializeStorage() {
+            if (!localStorage.getItem('employees')) {
+                localStorage.setItem('employees', JSON.stringify([]));
+            }
+            if (!localStorage.getItem('attendance')) {
+                localStorage.setItem('attendance', JSON.stringify([]));
+            }
+        }
+
+        function goToMainLogin() {
+            document.getElementById('mainLoginView').classList.remove('hidden');
+            document.getElementById('adminLoginView').classList.add('hidden');
+            document.getElementById('employeeLoginView').classList.add('hidden');
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('employeeSelect').value = '';
+        }
+
+        function goToAdminLogin() {
+            document.getElementById('mainLoginView').classList.add('hidden');
+            document.getElementById('adminLoginView').classList.remove('hidden');
+            document.getElementById('adminPassword').focus();
+        }
+
+        function goToEmployeeLogin() {
+            document.getElementById('mainLoginView').classList.add('hidden');
+            document.getElementById('employeeLoginView').classList.remove('hidden');
+            updateEmployeeSelect();
+            document.getElementById('employeeSelect').focus();
+        }
+
+        function loginAsAdmin() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === ADMIN_PASSWORD) {
+                document.getElementById('adminLoginView').classList.add('hidden');
+                document.getElementById('adminView').classList.remove('hidden');
+                displayEmployeeList();
+                displayAttendanceRecords();
+            } else {
+                alert('Invalid password');
+                document.getElementById('adminPassword').value = '';
+            }
+        }
+
+        function loginAsEmployee() {
+            const employeeSelect = document.getElementById('employeeSelect');
+            const selectedEmployee = employeeSelect.value;
+            
+            if (!selectedEmployee) {
+                alert('Please select an employee');
+                return;
+            }
+
+            const employees = JSON.parse(localStorage.getItem('employees'));
+            const employee = employees.find(e => e.id === selectedEmployee);
+
+            if (employee) {
+                sessionStorage.setItem('currentEmployee', JSON.stringify(employee));
+                document.getElementById('employeeLoginView').classList.add('hidden');
+                document.getElementById('employeeView').classList.remove('hidden');
+                document.getElementById('employeeNameDisplay').textContent = employee.name;
+                displayMyAttendance();
+            }
+        }
+
+        function addEmployee() {
+            const name = document.getElementById('employeeName').value.trim();
+            if (!name) {
+                alert('Please enter employee name');
+                return;
+            }
+
+            const employees = JSON.parse(localStorage.getItem('employees'));
+            const newEmployee = {
+                id: Date.now().toString(),
+                name: name
+            };
+
+            employees.push(newEmployee);
+            localStorage.setItem('employees', JSON.stringify(employees));
+            document.getElementById('employeeName').value = '';
+            displayEmployeeList();
+            updateEmployeeSelect();
+            alert('Employee added successfully!');
+        }
+
+        function removeEmployee(id) {
+            if (confirm('Are you sure you want to remove this employee?')) {
+                let employees = JSON.parse(localStorage.getItem('employees'));
+                employees = employees.filter(e => e.id !== id);
+                localStorage.setItem('employees', JSON.stringify(employees));
+                displayEmployeeList();
+                updateEmployeeSelect();
+            }
+        }
+
+        function displayEmployeeList() {
+            const employees = JSON.parse(localStorage.getItem('employees'));
+            const container = document.getElementById('employeeListAdmin');
+            
+            if (employees.length === 0) {
+                container.innerHTML = '<p style="color: #999; padding: 20px; text-align: center;">No employees added yet</p>';
+                return;
+            }
+
+            container.innerHTML = employees.map(emp => `
+                <div class="employee-item">
+                    <span class="employee-name">${emp.name}</span>
+                    <div class="employee-actions">
+                        <button class="btn-small btn-remove" onclick="removeEmployee('${emp.id}')">Remove</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateEmployeeSelect() {
+            const employees = JSON.parse(localStorage.getItem('employees'));
+            const select = document.getElementById('employeeSelect');
+            select.innerHTML = '<option value="">-- Choose an employee --</option>';
+            select.innerHTML += employees.map(emp => `
+                <option value="${emp.id}">${emp.name}</option>
+            `).join('');
+        }
+
+        async function getDeviceInfo() {
+            const userAgent = navigator.userAgent;
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+            
+            let ipAddress = 'Unknown';
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                ipAddress = data.ip;
+            } catch (error) {
+                console.log('Could not fetch IP address');
+            }
+            
+            return {
+                timestamp: new Date().toLocaleString(),
+                ipAddress: ipAddress,
+                deviceType: isMobile ? 'Mobile' : 'Desktop'
+            };
+        }
+
+        async function recordAttendance(type) {
+            const currentEmployee = JSON.parse(sessionStorage.getItem('currentEmployee'));
+            const info = await getDeviceInfo();
+            const now = new Date();
+            
+            const attendance = {
+                id: Date.now().toString(),
+                employeeId: currentEmployee.id,
+                employeeName: currentEmployee.name,
+                type: type,
+                timestamp: now.toLocaleString(),
+                time: now.toLocaleTimeString(),
+                date: now.toLocaleDateString(),
+                device: info.deviceType,
+                ipAddress: info.ipAddress
+            };
+
+            let attendanceList = JSON.parse(localStorage.getItem('attendance'));
+            attendanceList.push(attendance);
+            localStorage.setItem('attendance', JSON.stringify(attendanceList));
+
+            // Show success message
+            const statusMsg = document.getElementById('statusMessage');
+            const typeText = type === 'in' ? 'Clock In' : 'Clock Out';
+            statusMsg.textContent = `✓ ${typeText} recorded at ${attendance.time} | IP: ${attendance.ipAddress}`;
+            statusMsg.className = 'status-message status-success show';
+            
+            setTimeout(() => {
+                statusMsg.classList.remove('show');
+            }, 4000);
+
+            displayMyAttendance();
+        }
+
+        function displayMyAttendance() {
+            const currentEmployee = JSON.parse(sessionStorage.getItem('currentEmployee'));
+            const allAttendance = JSON.parse(localStorage.getItem('attendance'));
+            const myAttendance = allAttendance.filter(a => a.employeeId === currentEmployee.id);
+            
+            const today = new Date().toLocaleDateString();
+            const todayAttendance = myAttendance.filter(a => a.date === today);
+            
+            const container = document.getElementById('myAttendanceList');
+            
+            if (todayAttendance.length === 0) {
+                container.innerHTML = '<p style="color: #999; padding: 20px; text-align: center;">No check-ins today</p>';
+                return;
+            }
+
+            container.innerHTML = todayAttendance.map((record) => {
+                const badge = record.type === 'in' ? '✓ In' : '✗ Out';
+                const badgeColor = record.type === 'in' ? '#28a745' : '#dc3545';
+                return `
+                <div class="timeline-item">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="timeline-time">${badge}:</span>
+                        <span style="color: ${badgeColor}; font-weight: 600;">${record.time}</span>
+                    </div>
+                    <div style="font-size: 12px; color: #999; margin-top: 4px;">
+                        IP: ${record.ipAddress || 'Unknown'} | ${record.device}
+                    </div>
+                </div>
+            `;
+            }).join('');
+        }
+
+        function displayAttendanceRecords() {
+            const attendance = JSON.parse(localStorage.getItem('attendance'));
+            const container = document.getElementById('attendanceListAdmin');
+            
+            if (attendance.length === 0) {
+                container.innerHTML = '<p style="color: #999; padding: 20px; text-align: center;">No attendance records yet</p>';
+                return;
+            }
+
+            // Sort by timestamp descending (latest first)
+            const sorted = attendance.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            container.innerHTML = sorted.map(record => {
+                const typeText = record.type === 'in' ? 'Clock In' : 'Clock Out';
+                const typeColor = record.type === 'in' ? '#28a745' : '#dc3545';
+                return `
+                <div class="attendance-record" style="border-left-color: ${typeColor};">
+                    <div class="record-header">
+                        <span class="record-name">${record.employeeName}</span>
+                        <span style="color: ${typeColor}; font-weight: 600;">${typeText}</span>
+                    </div>
+                    <div class="record-details">
+                        Time: ${record.time}<br>
+                        Date: ${record.date}<br>
+                        IP Address: ${record.ipAddress || 'Unknown'}<br>
+                        Device: ${record.device}<br>
+                        Full: ${record.timestamp}
+                    </div>
+                </div>
+            `;
+            }).join('');
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                sessionStorage.removeItem('currentEmployee');
+                document.getElementById('mainLoginView').classList.remove('hidden');
+                document.getElementById('adminView').classList.add('hidden');
+                document.getElementById('employeeView').classList.add('hidden');
+                document.getElementById('adminPassword').value = '';
+                document.getElementById('employeeName').value = '';
+                document.getElementById('employeeSelect').value = '';
+                document.getElementById('adminLoginView').classList.add('hidden');
+                document.getElementById('employeeLoginView').classList.add('hidden');
+            }
+        }
+
+        function downloadCSV() {
+            const attendance = JSON.parse(localStorage.getItem('attendance'));
+            
+            if (attendance.length === 0) {
+                alert('No attendance records to download');
+                return;
+            }
+
+            // Prepare CSV headers
+            const headers = ['Employee Name', 'Type', 'Date', 'Time', 'IP Address', 'Device', 'Full Timestamp'];
+            
+            // Prepare CSV rows
+            const rows = attendance.map(record => [
+                record.employeeName,
+                record.type === 'in' ? 'Clock In' : 'Clock Out',
+                record.date,
+                record.time,
+                record.ipAddress || 'Unknown',
+                record.device,
+                record.timestamp
+            ]);
+
+            // Create CSV content
+            let csvContent = 'data:text/csv;charset=utf-8,';
+            csvContent += headers.join(',') + '\n';
+            
+            rows.forEach(row => {
+                csvContent += row.map(cell => `"${cell}"`).join(',') + '\n';
+            });
+
+            // Create download link
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', `attendance_${new Date().toISOString().split('T')[0]}.csv`);
+            link.click();
+
+            // Show success message
+            alert('✓ Attendance report downloaded successfully!');
+        }
+    </script>
+</body>
+</html>
